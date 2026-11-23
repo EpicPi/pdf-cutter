@@ -165,11 +165,10 @@ function renderPanelContent(): string {
       <div class="state-panel state-panel-success" aria-live="polite">
         ${renderFileSummary('Complete')}
         <span class="success-mark" aria-hidden="true">✓</span>
-        <h3>Your Letter-size PDF is ready</h3>
-        <p>${outputPages} centered pages, prepared entirely in this browser.</p>
+        <h3>Your US Letter-size PDF is ready</h3>
         <div class="action-row">
-          <a class="primary-action" href="${outputUrl}" download="${escapeHtml(getDownloadName(selectedFile))}">Download PDF</a>
           <button class="secondary-action" type="button" data-action="reset">Start Over</button>
+          <a class="primary-action" href="${outputUrl}" download="${escapeHtml(getDownloadName(selectedFile))}">Download PDF</a>
         </div>
       </div>
     `
@@ -197,7 +196,6 @@ function render(): void {
 
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">A tiny tool for a precise print job</p>
         <h1 id="page-title">Split. Rotate. Center.</h1>
         <p class="lede">
           Cut each PDF page once along its longest side, then rotate and center both halves

@@ -8,6 +8,7 @@ test('uploads, converts, and downloads a supported PDF entirely in the browser',
   sourcePage.drawRectangle({ x: 320, y: 120, width: 180, height: 80, color: rgb(0.9, 0.3, 0.2) })
 
   await page.goto('/')
+  await expect(page.getByText('A tiny tool for a precise print job')).toHaveCount(0)
   await page.locator('#file-input').setInputFiles({
     name: 'calibration.pdf',
     mimeType: 'application/pdf',
@@ -17,7 +18,11 @@ test('uploads, converts, and downloads a supported PDF entirely in the browser',
   await expect(page.getByRole('heading', { name: 'Ready to split and center' })).toBeVisible()
   await expect(page.getByText('2 Letter pages')).toBeVisible()
   await page.getByRole('button', { name: 'Prepare PDF' }).click()
-  await expect(page.getByRole('heading', { name: 'Your Letter-size PDF is ready' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your US Letter-size PDF is ready' })).toBeVisible()
+  await expect(page.locator('.state-panel-success .action-row > *')).toHaveText([
+    'Start Over',
+    'Download PDF',
+  ])
 
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('link', { name: 'Download PDF' }).click()

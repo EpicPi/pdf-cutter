@@ -1,6 +1,6 @@
 # PDF Half-Cutter
 
-[PDF Half-Cutter](https://epicpi.github.io/pdf-cutter/) prepares oversized PDF pages for printing on US Letter paper without scaling their contents.
+[PDF Half-Cutter](https://www.kancharlawar.com/pdf-cutter/) prepares oversized PDF pages for printing on US Letter paper without scaling their contents.
 
 For every input page, it:
 

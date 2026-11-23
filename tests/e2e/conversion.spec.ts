@@ -18,7 +18,7 @@ test('uploads, converts, and downloads a supported PDF entirely in the browser',
   await expect(page.getByRole('heading', { name: 'Ready to split and center' })).toBeVisible()
   await expect(page.getByText('2 Letter pages')).toBeVisible()
   await page.getByRole('button', { name: 'Prepare PDF' }).click()
-  await expect(page.getByRole('heading', { name: 'Your Letter-size PDF is ready' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your US Letter-size PDF is ready' })).toBeVisible()
   await expect(page.locator('.state-panel-success .action-row > *')).toHaveText([
     'Start Over',
     'Download PDF',

@@ -165,8 +165,7 @@ function renderPanelContent(): string {
       <div class="state-panel state-panel-success" aria-live="polite">
         ${renderFileSummary('Complete')}
         <span class="success-mark" aria-hidden="true">✓</span>
-        <h3>Your Letter-size PDF is ready</h3>
-        <p>${outputPages} centered pages, prepared entirely in this browser.</p>
+        <h3>Your US Letter-size PDF is ready</h3>
         <div class="action-row">
           <button class="secondary-action" type="button" data-action="reset">Start Over</button>
           <a class="primary-action" href="${outputUrl}" download="${escapeHtml(getDownloadName(selectedFile))}">Download PDF</a>

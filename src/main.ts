@@ -7,6 +7,8 @@ import '@fontsource/dm-mono/latin-400.css'
 import '@fontsource/dm-mono/latin-500.css'
 import './styles.css'
 
+import type { LabelPlacement } from './pdf/convert'
+
 type Phase = 'idle' | 'inspecting' | 'ready' | 'processing' | 'success' | 'error'
 
 type WorkerResponse =
@@ -32,6 +34,7 @@ let completedPages = 0
 let errorMessage = ''
 let outputUrl: string | null = null
 let requestId = 0
+let labelPlacement: LabelPlacement = 'corner'
 
 function escapeHtml(value: string): string {
   const element = document.createElement('span')
@@ -91,6 +94,24 @@ function renderFileSummary(status: string): string {
   `
 }
 
+function renderLabelPlacement(): string {
+  return `
+    <fieldset class="label-placement">
+      <legend>Label position</legend>
+      <div class="label-placement-options">
+        <label>
+          <input type="radio" name="label-placement" value="corner" ${labelPlacement === 'corner' ? 'checked' : ''} />
+          <span>Corner</span>
+        </label>
+        <label>
+          <input type="radio" name="label-placement" value="center" ${labelPlacement === 'center' ? 'checked' : ''} />
+          <span>Center</span>
+        </label>
+      </div>
+    </fieldset>
+  `
+}
+
 function renderPanelContent(): string {
   const fileInput = `
     <input class="sr-only" id="file-input" type="file" accept="application/pdf,.pdf" />
@@ -136,7 +157,8 @@ function renderPanelContent(): string {
           <span><strong>${outputPages}</strong> Letter ${outputPages === 1 ? 'page' : 'pages'}</span>
         </div>
         <h3>Ready to split and center</h3>
-        <p>Each page is cut halfway along its long side. Top or left comes first; every half is rotated clockwise and kept at exactly 1:1 scale.</p>
+        <p>Each page is cut halfway along its long side. Top or left comes first; every half is rotated clockwise, kept at exactly 1:1 scale, and labeled with its source page plus A or B.</p>
+        ${renderLabelPlacement()}
         <div class="action-row">
           <button class="secondary-action" type="button" data-action="reset">Start Over</button>
           <button class="primary-action" type="button" data-action="convert">Prepare PDF</button>
@@ -238,6 +260,7 @@ function render(): void {
             <div><dt>Scale</dt><dd>Exactly 1:1</dd></div>
             <div><dt>Cut</dt><dd>Halfway on long side</dd></div>
             <div><dt>Letter orientation</dt><dd>Automatic</dd></div>
+            <div><dt>Labels</dt><dd>Page + A/B</dd></div>
           </dl>
         </aside>
       </section>
@@ -258,6 +281,7 @@ function reset(): void {
   outputPages = 0
   completedPages = 0
   errorMessage = ''
+  labelPlacement = 'corner'
   render()
 }
 
@@ -303,7 +327,10 @@ async function convertSelectedFile(): Promise<void> {
   try {
     const bytes = await selectedFile.arrayBuffer()
     if (thisRequest !== requestId) return
-    worker.postMessage({ type: 'convert', requestId: thisRequest, bytes }, [bytes])
+    worker.postMessage(
+      { type: 'convert', requestId: thisRequest, bytes, labelPlacement },
+      [bytes],
+    )
   } catch {
     if (thisRequest === requestId) showError('This file could not be read from your device.')
   }
@@ -362,6 +389,13 @@ app.addEventListener('click', (event) => {
 
 app.addEventListener('change', (event) => {
   const input = event.target as HTMLInputElement
+  if (input.name === 'label-placement') {
+    if (input.value === 'corner' || input.value === 'center') {
+      labelPlacement = input.value
+    }
+    return
+  }
+
   if (input.id !== 'file-input') return
   const file = input.files?.[0]
   if (file) void inspectSelectedFile(file)

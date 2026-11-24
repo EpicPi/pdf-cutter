@@ -335,6 +335,18 @@ h1 {
   line-height: 1.6;
 }
 
+.state-panel-ready > p {
+  max-width: 560px;
+}
+
+.state-panel-ready .file-card {
+  margin-bottom: 18px;
+}
+
+.state-panel-ready .page-count {
+  margin-top: 0;
+}
+
 .file-card {
   display: flex;
   width: 100%;
@@ -443,6 +455,62 @@ h1 {
 .count-arrow {
   color: var(--coral);
   font-size: 18px;
+}
+
+.label-placement {
+  padding: 0;
+  border: 0;
+  margin: 18px 0 0;
+}
+
+.label-placement legend {
+  margin: 0 auto 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.label-placement-options {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(24, 35, 31, 0.12);
+  border-radius: 10px;
+  background: #f0ece2;
+}
+
+.label-placement-options label {
+  cursor: pointer;
+}
+
+.label-placement-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.label-placement-options span {
+  display: block;
+  min-width: 88px;
+  padding: 8px 14px;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.label-placement-options input:checked + span {
+  color: var(--green-dark);
+  background: white;
+  box-shadow: 0 2px 8px rgba(24, 35, 31, 0.1);
+}
+
+.label-placement-options input:focus-visible + span {
+  outline: 3px solid rgba(13, 111, 92, 0.25);
+  outline-offset: 1px;
 }
 
 .action-row {
@@ -788,13 +856,17 @@ footer a {
     flex-direction: column;
   }
 
+  .upload-panel {
+    padding: 18px;
+  }
+
   .drop-zone {
     min-height: 300px;
   }
 
   .state-panel {
     min-height: 360px;
-    padding: 22px;
+    padding: 18px;
   }
 
   .file-status {
@@ -812,6 +884,10 @@ footer a {
   .action-row {
     width: 100%;
     flex-direction: column;
+  }
+
+  .label-placement-options span {
+    min-width: 78px;
   }
 
   .primary-action,

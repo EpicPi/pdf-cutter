@@ -30,6 +30,16 @@ export interface PdfConversion extends PdfInspection {
 }
 
 export type ProgressCallback = (completedPages: number, totalPages: number) => void
+export type LabelPlacement = 'corner' | 'center'
+
+export interface PdfConversionOptions {
+  labelPlacement?: LabelPlacement
+}
+
+const LABEL_FONT_SIZE = 34
+const LABEL_INSET = 18
+const LABEL_OPACITY = 0.85
+const LABEL_GRAY = 0.45
 
 export class PdfCutterError extends Error {
   constructor(
@@ -152,12 +162,50 @@ function hasPageContents(page: PDFPage): boolean {
   return page.node.Contents() !== undefined
 }
 
+function getLabelPosition(
+  placement: ReturnType<typeof getCenteredPlacement>,
+  labelWidth: number,
+  labelHeight: number,
+  labelPlacement: LabelPlacement,
+): { x: number; y: number } {
+  if (labelPlacement === 'center') {
+    const centerX = placement.marginX + placement.width / 2
+    const centerY = placement.marginY + placement.height / 2
+
+    switch (placement.rotation) {
+      case 0:
+        return { x: centerX - labelWidth / 2, y: centerY - labelHeight / 2 }
+      case 90:
+        return { x: centerX + labelHeight / 2, y: centerY - labelWidth / 2 }
+      case 180:
+        return { x: centerX + labelWidth / 2, y: centerY + labelHeight / 2 }
+      case 270:
+        return { x: centerX - labelHeight / 2, y: centerY + labelWidth / 2 }
+    }
+  }
+
+  const right = placement.marginX + placement.width - LABEL_INSET
+  const bottom = placement.marginY + LABEL_INSET
+
+  switch (placement.rotation) {
+    case 0:
+      return { x: right - labelWidth, y: bottom }
+    case 90:
+      return { x: right, y: bottom }
+    case 180:
+      return { x: right, y: bottom + labelHeight }
+    case 270:
+      return { x: right - labelHeight, y: bottom + labelWidth }
+  }
+}
+
 async function addHalfPage(
   output: PDFDocument,
   source: PreparedPage,
   half: DisplayHalf,
-  pageNumber: number,
-  pageNumberFont: PDFFont,
+  label: string,
+  labelFont: PDFFont,
+  labelPlacement: LabelPlacement,
 ): Promise<void> {
   const clipBox = getDisplayHalfClipBox(source.box, source.rotation, half)
   const outputRotation = getOutputRotation(source.rotation)
@@ -180,21 +228,28 @@ async function addHalfPage(
     })
   }
 
-  const label = String(pageNumber)
-  const fontSize = 9
-  const margin = 18
+  const labelWidth = labelFont.widthOfTextAtSize(label, LABEL_FONT_SIZE)
+  const labelHeight = labelFont.heightAtSize(LABEL_FONT_SIZE, { descender: false })
+  const labelPosition = getLabelPosition(
+    placement,
+    labelWidth,
+    labelHeight,
+    labelPlacement,
+  )
   outputPage.drawText(label, {
-    x: placement.pageWidth - margin - pageNumberFont.widthOfTextAtSize(label, fontSize),
-    y: margin,
-    size: fontSize,
-    font: pageNumberFont,
-    color: rgb(0.32, 0.32, 0.32),
+    ...labelPosition,
+    size: LABEL_FONT_SIZE,
+    font: labelFont,
+    color: rgb(LABEL_GRAY, LABEL_GRAY, LABEL_GRAY),
+    opacity: LABEL_OPACITY,
+    rotate: degrees(placement.rotation),
   })
 }
 
 export async function convertPdf(
   bytes: ArrayBuffer | Uint8Array,
   onProgress?: ProgressCallback,
+  options: PdfConversionOptions = {},
 ): Promise<PdfConversion> {
   const { document: sourceDocument, pages } = await loadAndValidate(bytes)
   const output = await PDFDocument.create()
@@ -208,17 +263,33 @@ export async function convertPdf(
   output.setCreator('PDF Half-Cutter')
   output.setProducer('PDF Half-Cutter')
   output.catalog.getOrCreateViewerPreferences().setPrintScaling(PrintScaling.None)
-  const pageNumberFont = await output.embedFont(StandardFonts.Helvetica)
+  const labelFont = await output.embedFont(StandardFonts.HelveticaBold)
+  const labelPlacement = options.labelPlacement ?? 'corner'
 
   let completedPages = 0
   const totalPages = pages.length * 2
 
-  for (const source of pages) {
-    await addHalfPage(output, source, source.halves[0], completedPages + 1, pageNumberFont)
+  for (const [sourceIndex, source] of pages.entries()) {
+    const sourcePageNumber = sourceIndex + 1
+    await addHalfPage(
+      output,
+      source,
+      source.halves[0],
+      `${sourcePageNumber}A`,
+      labelFont,
+      labelPlacement,
+    )
     completedPages += 1
     onProgress?.(completedPages, totalPages)
 
-    await addHalfPage(output, source, source.halves[1], completedPages + 1, pageNumberFont)
+    await addHalfPage(
+      output,
+      source,
+      source.halves[1],
+      `${sourcePageNumber}B`,
+      labelFont,
+      labelPlacement,
+    )
     completedPages += 1
     onProgress?.(completedPages, totalPages)
   }

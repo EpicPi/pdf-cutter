@@ -1,10 +1,20 @@
 /// <reference lib="webworker" />
 
-import { PdfCutterError, convertPdf, inspectPdf } from './pdf/convert'
+import {
+  PdfCutterError,
+  convertPdf,
+  inspectPdf,
+  type LabelPlacement,
+} from './pdf/convert'
 
 type WorkerRequest =
   | { type: 'inspect'; requestId: number; bytes: ArrayBuffer }
-  | { type: 'convert'; requestId: number; bytes: ArrayBuffer }
+  | {
+      type: 'convert'
+      requestId: number
+      bytes: ArrayBuffer
+      labelPlacement: LabelPlacement
+    }
 
 interface ErrorResponse {
   type: 'error'
@@ -43,14 +53,18 @@ worker.addEventListener('message', async (event: MessageEvent<WorkerRequest>) =>
       return
     }
 
-    const result = await convertPdf(request.bytes, (completedPages, totalPages) => {
-      worker.postMessage({
-        type: 'progress',
-        requestId: request.requestId,
-        completedPages,
-        totalPages,
-      })
-    })
+    const result = await convertPdf(
+      request.bytes,
+      (completedPages, totalPages) => {
+        worker.postMessage({
+          type: 'progress',
+          requestId: request.requestId,
+          completedPages,
+          totalPages,
+        })
+      },
+      { labelPlacement: request.labelPlacement },
+    )
 
     const transferableBytes = result.bytes.buffer.slice(
       result.bytes.byteOffset,
